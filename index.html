@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <meta name="description" content="A free, offline-friendly 23-category d20 mythical creature generator, with a text-only bestiary and TXT export." />
+  <title>Mythical Creature Generator — The Field Compendium</title>
+  <style>
+    :root {
+      --ink: #2b302b;
+      --muted: #716b5f;
+      --linen: #f4efdf;
+      --paper: #fbf7ea;
+      --paper-2: #eee5d0;
+      --rule: #d2c7ad;
+      --red: #7c3e35;
+      --red-hover: #64322d;
+      --gold: #ae8951;
+      --forest: #192a2a;
+      --forest-2: #243a37;
+      --success: #426d53;
+      --shadow: 0 12px 36px rgba(36, 30, 20, 0.09);
+      --serif: Georgia, 'Times New Roman', serif;
+      --sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; color: var(--ink); font: 15px/1.55 var(--sans);
+      background: var(--linen);
+      background-image: radial-gradient(circle at 18% 4%, rgba(174,137,81,.08) 0, transparent 32%),
+        radial-gradient(circle at 82% 52%, rgba(124,62,53,.06) 0, transparent 36%);
+    }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { opacity: .48; cursor: not-allowed; }
+    :focus-visible { outline: 3px solid #bb8150; outline-offset: 2px; }
+    a { color: var(--red); }
+    .site-header {
+      color: #f5eedc; background: var(--forest);
+      border-bottom: 5px solid #ad8957; position: relative; overflow: hidden;
+    }
+    .site-header::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(112deg, transparent 0 14px, rgba(255,255,255,.018) 14px 15px),
+                  radial-gradient(circle at 72% 14%, rgba(210,170,103,.15), transparent 42%);
+    }
+    .header-inner { max-width: 1440px; margin: auto; padding: 32px 34px 37px; position: relative; }
+    .eyebrow { text-transform: uppercase; letter-spacing: .21em; font-size: 11px; font-weight: 750; color: #d8b988; }
+    .site-header h1 { font: normal clamp(2.15rem,4vw,3.75rem)/1.12 var(--serif); margin: 9px 0 11px; letter-spacing: -.025em; }
+    .header-subtitle { color: #d9d7ca; max-width: 680px; margin: 0; font-size: 15px; }
+    .header-mark { position: absolute; right: 42px; top: 39px; border: 1px solid #637269; border-radius: 50%; width: 98px; height: 98px; display: grid; place-items: center; font: 35px var(--serif); color: #d6bb87; transform: rotate(-15deg); opacity: .78; }
+    .header-mark::after { content: ''; position: absolute; inset: 8px; border: 1px solid #70816f; border-radius: 50%; }
+    .layout { max-width: 1440px; padding: 28px 34px 48px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(370px,.88fr); align-items: start; gap: 23px; }
+    .panel { background: var(--paper); box-shadow: var(--shadow); border: 1px solid #d6ccb4; border-radius: 12px; overflow: hidden; }
+    .panel-top { border-bottom: 1px solid var(--rule); padding: 22px 25px 20px; }
+    .kicker { font-weight: 750; font-size: 10px; letter-spacing: .19em; text-transform: uppercase; color: var(--red); }
+    h2, h3, h4, p { margin-top: 0; }
+    .panel h2 { font: normal 28px/1.2 var(--serif); margin: 6px 0 8px; }
+    .subtle { color: var(--muted); font-size: 13px; }
+    .panel-top p:last-child { margin-bottom: 0; }
+    .intro-card { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 25px; background: #eee7d7; border-bottom: 1px solid var(--rule); }
+    .progress-caption { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .progress-caption strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+    .progress-track { background: #d6ccb6; border-radius: 20px; height: 6px; width: min(260px,45vw); overflow: hidden; }
+    .progress-fill { height: 100%; width: 0; background: var(--red); border-radius: 20px; transition: width .2s ease; }
+    .status-pill { font-size: 11px; color: var(--red); background: #e7d5c8; border: 1px solid #d8b8a5; padding: 5px 10px; border-radius: 100px; white-space: nowrap; font-weight: 700; }
+    .status-pill.complete { color: #2f6547; background: #dce9d9; border-color: #b6d1b9; }
+    .controls { padding: 21px 25px; border-bottom: 1px solid var(--rule); }
+    .meta-grid { display: grid; grid-template-columns: 1fr 124px; gap: 12px; margin-bottom: 14px; }
+    label.small-label { display: block; font-size: 11px; text-transform: uppercase; color: #6a655c; letter-spacing: .12em; font-weight: 750; margin-bottom: 6px; }
+    .text-control, .bulk-box, .notes-box {
+      display: block; width: 100%; border: 1px solid #c9bfa9; border-radius: 6px; background: #fffdf6; color: var(--ink); padding: 10px 11px; outline-offset: 2px;
+    }
+    .text-control:focus, .bulk-box:focus, .notes-box:focus, .roll-number:focus { border-color: var(--red); }
+    .bulk-box { resize: vertical; min-height: 67px; font-size: 13px; }
+    .notes-box { resize: vertical; min-height: 86px; }
+    .helper { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+    .button-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 11px; }
+    .btn { border: 1px solid #b9aa8e; background: #fbf8f0; color: var(--ink); border-radius: 6px; padding: 9px 13px; font-size: 12px; font-weight: 750; transition: background .12s ease, border-color .12s ease; }
+    .btn:hover:not(:disabled) { background: #efe3d0; border-color: #9d8c73; }
+    .btn-primary { color: #fff7ed; background: var(--red); border-color: var(--red); }
+    .btn-primary:hover:not(:disabled) { background: var(--red-hover); border-color: var(--red-hover); }
+    .btn-dark { background: var(--forest); color: #fff8e9; border-color: var(--forest); }
+    .btn-dark:hover:not(:disabled) { background: #30463f; }
+    .btn-danger { color: #7a4239; }
+    .input-sections { padding: 0 25px 20px; }
+    .section-heading { margin: 23px 0 13px; display: flex; gap: 12px; align-items: center; }
+    .section-heading h3 { font: normal 21px/1.2 var(--serif); margin: 0; white-space: nowrap; }
+    .section-heading::after { content: ''; height: 1px; flex: 1; background: var(--rule); }
+    .section-detail { color: var(--muted); font-size: 12px; margin: -8px 0 9px; }
+    .roll-card { padding: 11px 0 12px; border-bottom: 1px solid #e4ddcd; }
+    .roll-row { display: grid; grid-template-columns: 34px minmax(0,1fr) 114px; align-items: center; gap: 10px; }
+    .roll-index { color: #a0805f; font: normal 19px/1 var(--serif); font-variant-numeric: tabular-nums; }
+    .roll-name { display: block; font-weight: 700; font-size: 13px; margin-bottom: 2px; }
+    .roll-result { display: block; color: #766d5d; font-size: 12px; line-height: 1.45; }
+    .roll-result.filled { color: #356047; }
+    .roll-result.pending { color: #995b3f; }
+    .roll-box { display: flex; align-items: center; gap: 5px; }
+    .roll-number { width: 62px; min-width: 0; height: 40px; border: 1px solid #c7bba6; border-radius: 5px; background: #fffdf7; text-align: center; color: var(--ink); font-weight: 700; font-size: 15px; }
+    .die-button { flex: 1; height: 40px; border: 1px solid #c9bea7; border-radius: 5px; color: #7b523b; background: #f0e7d5; font-size: 12px; font-weight: 800; }
+    .die-button:hover { background: #e7d6b9; }
+    .outcomes { margin: 7px 0 0 44px; }
+    .outcomes summary { color: #846247; font-size: 11px; font-weight: 750; cursor: pointer; user-select: none; width: max-content; }
+    .outcome-grid { margin-top: 9px; display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+    .option { border: 1px solid #e5d9c3; border-radius: 5px; display: flex; gap: 9px; align-items: flex-start; text-align: left; background: #f7f1e4; color: #4c463c; padding: 7px; font-size: 11px; line-height: 1.4; }
+    .option:hover { background: #ece0ca; }
+    .option.active { background: #e2e9dd; border-color: #7a9d83; }
+    .option-number { font-variant-numeric: tabular-nums; font-weight: 800; color: var(--red); }
+    .bonus-slot { margin: 6px 0 0 44px; }
+    .bonus-wrap { border-left: 3px solid #b99867; padding: 10px 0 4px 12px; background: linear-gradient(90deg,#f4ead9,transparent 85%); }
+    .bonus-title { color: var(--red); font-size: 11px; font-weight: 800; margin-bottom: 8px; }
+    .bonus-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .bonus-field label { display: block; font-weight: 750; font-size: 11px; margin-bottom: 4px; }
+    .bonus-input { border: 1px solid #c6b89e; background: #fffdf5; border-radius: 5px; height: 35px; width: 72px; padding: 4px 7px; }
+    .bonus-result { display: block; margin-top: 4px; font-size: 11px; color: #776d5c; }
+    .bonus-nested { margin-top: 7px; }
+    .preview-panel { position: sticky; top: 20px; }
+    .preview-panel .panel-top { padding-bottom: 17px; }
+    .preview-actions { padding: 15px 24px; display: flex; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid var(--rule); background: #f4edde; }
+    .preview-actions .btn { flex: 1; min-width: 105px; }
+    .book-page { padding: 25px 28px 30px; min-height: 380px; background: #fbf6e9; background-image: radial-gradient(circle at 20% 18%,rgba(163,121,75,.045),transparent 30%); }
+    .book-stamp { font-size: 10px; color: #8c785b; text-transform: uppercase; letter-spacing: .2em; text-align: center; }
+    .book-divider { position: relative; border-top: 1px solid #cbb995; margin: 13px 0 16px; }
+    .book-divider::after { content: '◆'; position: absolute; top: -11px; left: calc(50% - 11px); background: #fbf6e9; font-size: 12px; color: #a88b5c; padding: 0 6px; }
+    .entry-title { font: normal 32px/1.15 var(--serif); margin: 0; text-align: center; overflow-wrap: anywhere; }
+    .entry-subtitle { text-align: center; font: italic 13px var(--serif); color: #8b765c; margin: 8px 0 19px; }
+    .facts { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin: 13px 0 19px; }
+    .fact-chip { font-size: 11px; background: #eae0ce; border: 1px solid #d3c5ae; border-radius: 30px; padding: 4px 9px; }
+    .entry-section { margin: 18px 0 0; }
+    .entry-section h4 { font: normal 18px/1.3 var(--serif); color: #75483a; margin: 0 0 6px; border-bottom: 1px solid #e2d7c5; padding-bottom: 5px; }
+    .entry-section p { font-size: 13px; color: #4b473e; margin: 0; line-height: 1.75; }
+    .entry-section .empty { color: #9c9384; font-style: italic; }
+    .record-caption { margin: 15px 0 0; color: #7d7467; font-size: 11px; text-align: center; }
+    .library-section { padding: 22px 25px 25px; border-top: 1px solid var(--rule); background: #f7f0e1; }
+    .library-section h3 { font: normal 22px var(--serif); margin: 6px 0; }
+    .library-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 13px 0 0; }
+    .library-actions .btn { flex: 1; }
+    .library-list { margin-top: 13px; display: grid; gap: 8px; }
+    .saved-card { background: #fffbf1; border: 1px solid #d5c7ad; border-radius: 7px; padding: 11px 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .saved-card-name { font: normal 17px/1.2 var(--serif); margin: 0 0 3px; overflow-wrap: anywhere; }
+    .saved-card-meta { font-size: 11px; color: #7b7061; }
+    .saved-card-controls { display: flex; gap: 5px; flex-shrink: 0; }
+    .saved-card-controls button { border: 1px solid #cbbda3; border-radius: 5px; background: #f3ebda; color: #5f4a37; font-weight: 700; font-size: 11px; padding: 6px 9px; }
+    .saved-card-controls button:hover { background: #e8d9c1; }
+    .saved-card-controls .remove { color: #8c4c41; }
+    .library-empty { font-size: 12px; color: #807563; font-style: italic; border: 1px dashed #c6b89f; padding: 15px; border-radius: 6px; margin: 0; }
+    .notes-area { padding: 0 25px 23px; }
+    .notes-area h3 { font: normal 20px var(--serif); margin: 17px 0 10px; }
+    .message { min-height: 18px; font-size: 12px; color: #456d51; margin: 9px 0 0; }
+    .footer { padding: 0 34px 25px; max-width: 1440px; margin: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #716a5e; font-size: 12px; }
+    .no-script { margin: 18px auto; max-width: 850px; padding: 16px; border: 1px solid #b87060; }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; padding: 20px; }
+      .preview-panel { position: static; }
+      .header-inner { padding: 28px 22px; }
+      .header-mark { right: 23px; width: 75px; height: 75px; font-size: 26px; }
+    }
+    @media (max-width: 580px) {
+      .layout { padding: 13px 10px 25px; gap: 15px; }
+      .panel-top, .controls, .notes-area, .library-section { padding-left: 16px; padding-right: 16px; }
+      .input-sections { padding-left: 16px; padding-right: 16px; }
+      .site-header h1 { max-width: 95%; font-size: 2.15rem; }
+      .header-mark { display: none; }
+      .roll-row { grid-template-columns: 27px minmax(0,1fr) 99px; gap: 6px; }
+      .roll-number { width: 56px; }
+      .die-button { min-width: 35px; }
+      .roll-index { font-size: 16px; }
+      .outcome-grid { grid-template-columns: 1fr; }
+      .outcomes, .bonus-slot { margin-left: 33px; }
+      .book-page { padding: 20px 17px; }
+      .intro-card { padding: 12px 16px; }
+      .footer { padding: 0 16px 20px; display: block; }
+    }
+    @media print {
+      body { background: #fff !important; }
+      .site-header, .generator-panel, .preview-actions, .footer, .preview-panel > .panel-top, .intro-card, .library-section { display: none !important; }
+      .layout { display: block; max-width: none; padding: 0; }
+      .panel { border: 0; box-shadow: none; }
+      .book-page { padding: 0; background: #fff; }
+      .preview-panel { position: static; }
+      .entry-section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="eyebrow">The Field Compendium · Creature Forge</div>
+      <h1>Mythical Creature Generator</h1>
+      <p class="header-subtitle">Twenty-three rolls. One undiscovered species. Record your d20 results, interpret the worldbuilding tables, and preserve your creature as a text-only bestiary entry.</p>
+      <div class="header-mark" aria-hidden="true">✦</div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel generator-panel" aria-labelledby="generator-heading">
+      <div class="panel-top">
+        <div class="kicker">01 / The rolls</div>
+        <h2 id="generator-heading">Build your creature</h2>
+        <p class="subtle">Enter one result from 1–20 for each category. Results marked <strong>roll twice</strong> open bonus dice automatically. You can also browse any table or use the optional digital dice.</p>
+      </div>
+      <div class="intro-card">
+        <div>
+          <div class="progress-caption"><strong id="progress-label">0 of 23</strong> primary rolls recorded <span id="bonus-label"></span></div>
+          <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progress-fill"></div></div>
+        </div>
+        <span class="status-pill" id="completion-pill">Unstarted</span>
+      </div>
+      <div class="controls">
+        <div class="meta-grid">
+          <div><label class="small-label" for="creature-name">Creature name</label><input class="text-control" id="creature-name" placeholder="Unnamed creature" maxlength="90" autocomplete="off" /></div>
+          <div><label class="small-label" for="specimen-number">Specimen no.</label><input class="text-control" id="specimen-number" value="001" maxlength="12" autocomplete="off" /></div>
+        </div>
+        <label class="small-label" for="bulk-rolls">Quick entry · all 23 rolls</label>
+        <textarea class="bulk-box" id="bulk-rolls" placeholder="Example: 1, 2, 14, 17, 20, 2, ..." spellcheck="false" aria-describedby="bulk-hint"></textarea>
+        <div class="button-bar">
+          <button type="button" class="btn btn-primary" id="apply-rolls">Apply 23 rolls</button>
+          <button type="button" class="btn" id="fill-empty">Roll empty slots</button>
+          <button type="button" class="btn btn-danger" id="reset-button">New creature / clear</button>
+        </div>
+        <p class="helper" id="bulk-hint">You can enter results individually below or paste exactly 23 comma-, space-, or line-separated numbers. A draft is saved in this browser.</p>
+        <p class="message" id="generator-message" role="status" aria-live="polite"></p>
+      </div>
+      <div class="input-sections" id="category-list"></div>
+      <div class="notes-area">
+        <h3>Naturalist's notes <span class="subtle">(optional)</span></h3>
+        <label class="small-label" for="creature-notes">Your custom lore, observations, or refinements</label>
+        <textarea class="notes-box" id="creature-notes" placeholder="Describe unusual anatomy, habitat details, legends, or anything the dice don't capture..."></textarea>
+        <p class="helper">Included in the bestiary preview and TXT export. Your own notes are not rewritten.</p>
+      </div>
+    </section>
+
+    <aside class="panel preview-panel" aria-labelledby="preview-heading">
+      <div class="panel-top">
+        <div class="kicker">02 / The record</div>
+        <h2 id="preview-heading">Bestiary preview</h2>
+        <p class="subtle">A basic field-guide entry assembled directly from your dice, without external services or generated images.</p>
+      </div>
+      <div class="preview-actions">
+        <button type="button" class="btn btn-dark" id="download-button">↓ Export .txt</button>
+        <button type="button" class="btn" id="copy-button">Copy entry</button>
+        <button type="button" class="btn" id="print-button">Print</button>
+      </div>
+      <article class="book-page" id="bestiary-preview" aria-live="polite" aria-label="Generated bestiary entry"></article>
+      <section class="library-section" aria-labelledby="library-heading">
+        <div class="kicker">03 / The collection</div>
+        <h3 id="library-heading">Your saved bestiary <span id="library-count" class="subtle"></span></h3>
+        <p class="subtle">Save more than one creature and reopen its rolls later. This collection stays in this browser; it is not shared between visitors or devices.</p>
+        <div class="library-actions">
+          <button class="btn btn-primary" type="button" id="save-to-bestiary">Save current creature</button>
+          <button class="btn" type="button" id="export-bestiary">Export all .txt</button>
+        </div>
+        <div class="library-list" id="library-list" aria-live="polite"></div>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <span>THE FIELD COMPENDIUM · 23 × D20 CREATURE SYSTEM</span>
+    <span>Standalone HTML · No accounts · No external images or APIs</span>
+  </footer>
+  <noscript><p class="no-script">Enable JavaScript to use the dice inputs, live bestiary preview, and TXT export.</p></noscript>
+
+<script>
+'use strict';
+// Everything required for this site lives in this file: tables, generator, preview and TXT export.
+const DATA = [
+  { title:'Historical Origin', options:[
+    'Primordial — predates recorded history','Divine — created by a god','Natural magical evolution','Accidental arcane creation','Artificially engineered','Corrupted existing species','Extraplanar origin','Extraterrestrial origin','Undead origin','Fey origin','Born from a catastrophe','Unknown origin','Created as divine punishment','Survivor of a destroyed plane','Forgotten ancient experiment','Manifestation of a living curse','Evolved through magical symbiosis','Reincarnated ancestral being','Displaced from another timeline','Hybrid origin — roll twice'
+  ], bonusOn:20 },
+  { title:'Fundamental Body Plan', options:[
+    'Humanoid','Quadruped','Hexapod','Eight+ limbed','Serpentine','Avian','Reptilian','Amphibious','Fish-like','Arthropod','Molluscan','Worm-like','Plant-like','Fungal','Amorphous','Radial/star-shaped','Colonial — many organisms acting as one','Composite — roll twice and combine','Transformative — possesses multiple body plans','Anatomically unprecedented'
+  ], bonusOn:18 },
+  { title:'Size', options:[
+    'Insect-sized','Mouse-sized','Cat-sized','Dog-sized','Human-sized','Horse-sized','Rhinoceros-sized','Elephant-sized','House-sized','Castle-sized','Mountain-sized','Variable size','Microscopic','Hand-sized','Human child-sized','Giraffe-sized','Ship-sized','Grows continuously throughout life','Size changes depending on environment','Roll twice — two distinct size states'
+  ], bonusOn:20 },
+  { title:'Primary Exterior', options:[
+    'Bare skin','Fur','Feathers','Reptilian scales','Fish scales','Chitin','Thick hide','Shell','Bone plating','Keratin plates','Bark','Fungal tissue','Stone','Crystal','Metal','Gelatinous membrane','Constantly shedding tissue','Semi-transparent','Changes with environment','Roll twice and combine'
+  ], bonusOn:20 },
+  { title:'Distinctive Anatomical Feature', options:[
+    'Horns/antlers','Unusual eyes','Oversized mouth','Tusks/fangs','Prehensile tongue','Unusual tail','Wings','External organs','Multiple heads','Extra limbs','Missing expected anatomy','Bioluminescence','Exposed skeleton','Defensive spines','Sensory tendrils','Inflatable structures','Detachable anatomy','Symbiotic organism attached to body','Impossible internal anatomy','Roll twice'
+  ], bonusOn:20 },
+  { title:'Locomotion', options:[
+    'Walking/running','Climbing','Burrowing','Swimming','Conventional flight','Gliding','Slithering','Hopping/leaping','Floating','Short-distance teleportation','Moving through solid material','Multiple conventional movement types','Crawling on ceilings','Swinging between surfaces','Rolling','Walking across water','Propelling itself through air currents','Gravity-defying movement','Traveling inside another organism','Roll twice and combine'
+  ], bonusOn:20 },
+  { title:'Habitat', options:[
+    'Temperate forest','Ancient/deep forest','Jungle','Grassland','Desert','Mountains','Arctic/tundra','Swamp','Rivers/lakes','Coastal','Open ocean','Deep ocean','Underground','Caverns','Urban settlements','Ruins','Magical wasteland','Upper atmosphere','Another plane','Migratory — roll twice for endpoints'
+  ], bonusOn:20 },
+  { title:'Diet / Energy Source', options:[
+    'Plants','Fruit','Fungi','Small animals','Large animals','Fish','Carrion','Blood','Bones/minerals','Metal','Magic','Heat/fire','Electricity','Sunlight','Souls','Memories','Emotions','Dreams','Nothing — apparently does not feed','Roll twice — requires both'
+  ], bonusOn:20 },
+  { title:'Ecological Role', options:[
+    'Apex predator','Ambush predator','Grazer/browser','Scavenger','Parasite','Pollinator/seed disperser','Ecosystem engineer','Symbiote','Magical decomposer','Territorial guardian','Migratory megafauna','Ecological anomaly','Brood parasite','Magical energy regulator','Host organism for smaller species','Natural predator of magical creatures','Environmental purifier','Disease or curse carrier','Keystone species maintaining local balance','Roll twice — fills both roles'
+  ], bonusOn:20 },
+  { title:'Social Structure', options:[
+    'Completely solitary','Mated pairs','Parent and offspring','Small family groups','Packs','Herds','Colonies','Hives','Dominance hierarchy','One leader with numerous followers','Telepathic collective','Individuals periodically merge physically','Temporary seasonal gatherings','Nomadic clans','Matriarchal society','Patriarchal society','Ruled by an ancient elder','Organized into biological castes','Society structured around ritual','Roll twice — combines social systems'
+  ], bonusOn:20 },
+  { title:'Intelligence', options:[
+    'Almost mindless','Insect-like instincts','Ordinary animal','Highly intelligent animal','Primitive sapience','Human-equivalent','Highly intelligent','Genius','Ancient intelligence','Collective intelligence','Intelligence increases with age','Fundamentally alien cognition','Instinctive but capable of complex rituals','Sapient only under specific conditions','Gains knowledge by consuming other beings','Remembers previous lives','Intelligence increases near others of its species','Perceives events before they happen','Adapts its intelligence to its environment','Roll twice — different cognitive states'
+  ], bonusOn:20 },
+  { title:'Disposition Toward Humanoids', options:[
+    'Immediately predatory','Aggressively territorial','Hostile','Defensive','Fearful','Avoidant','Indifferent','Curious','Opportunistic','Friendly','Protective','Fundamentally incomprehensible behavior','Actively seeks companionship','Treats humanoids as livestock','Treats humanoids as offspring','Views humanoids as sacred','Attempts to imitate humanoid society','Trades or negotiates with humanoids','Judges humanoids by an unknown criterion','Roll twice — contradictory behaviors'
+  ], bonusOn:20 },
+  { title:'Source of Power', options:[
+    'Specialized biological organ','Blood','Bones','Brain/nervous system','Digestive system','Symbiotic microorganism','Parasitic organism','Consumed magical energy','Elemental energy','Soul','Stolen souls','Divine fragment','Fey influence','Planar radiation','Environmental magic','Lunar cycle','Solar cycle','Emotion','Unknown','Two sources — roll twice'
+  ], bonusOn:20 },
+  { title:'Primary Ability', options:[
+    'Regeneration','Shapeshifting','Invisibility','Illusion','Telepathy','Mind control','Elemental projection','Weather manipulation','Poison/venom','Petrification','Life draining','Magic absorption','Teleportation','Size alteration','Duplication','Animate dead matter','Manipulate plants/animals','Alter gravity','Manipulate memories','Roll twice and combine'
+  ], bonusOn:20 },
+  { title:'Ability Delivery Mechanism', options:[
+    'Gaze','Voice/song','Breath','Bite','Claws/touch','Blood/body fluid','Spores/pollen','Light/color','Proximity aura','Specialized organ','Must consume something first','Requires specific environmental conditions','Physical vibrations','Scent/pheromones','Direct mental connection','Shedding skin or body parts','Contact with its shadow','Dreams or unconscious thought','Ritualized movement','Roll twice — both mechanisms required'
+  ], bonusOn:20 },
+  { title:'Primary Weakness', options:[
+    'Fire','Cold','Water','Sunlight','Darkness','Iron','Silver','Salt','Specific plant','Specific sound','Damage to distinctive organ','Ability use exhausts it','Cannot cross a particular boundary','Specific emotion disrupts its powers','Environmental dependency','Vulnerable during transformation','Symbiote can be separated','Extreme metabolic requirement','No known weakness','Roll twice'
+  ], bonusOn:20 },
+  { title:'Reproduction', options:[
+    'Eggs','Live birth','Spores','Budding','Fragmentation','Parasitic implantation','Converts another species','Created from corpses','Created by environmental conditions','Ritual creation','Reincarnation','Never observed reproducing','Asexual cloning','Requires two different species','Born from magical objects','Offspring develop inside plants','Only reproduces during celestial events','Reproduction kills the parent','Offspring must consume the parent','Roll twice — complex reproductive cycle'
+  ], bonusOn:20 },
+  { title:'Lifespan', options:[
+    'Days','Weeks','1–5 years','10–30 years','Human-like','100–300 years','500–1,000 years','Several millennia','Does not age','Repeated reincarnation','Becomes a different creature with age','Lifespan depends on external condition','Ages backward','Periodically regenerates into a younger form','Remains dormant for centuries','Life extended through consuming magic','Ages only when using its abilities','Dies immediately after reproduction','Exists outside conventional time','Roll twice — unusual lifecycle'
+  ], bonusOn:20 },
+  { title:"Civilization's Understanding", options:[
+    'Completely unknown','Considered fictional','Known only through folklore','Scholars debate its existence','Known but extremely rare','Feared wilderness animal','Commonly encountered','Actively hunted','Protected','Domesticated','Worshipped','Central to civilization','Forbidden to study','Believed extinct','Recently spreading into populated regions','Existence concealed by powerful organizations','Considered a supernatural curse','Mistaken for another species','Lives secretly alongside humanoids','Widely known but profoundly misunderstood'
+  ] },
+  { title:'Historical Relationship', options:[
+    'Nearly exterminated humanoids once','Humanoids nearly exterminated it','Used as a weapon in an ancient war','Created during a war','Responsible for a fallen civilization','Saved a civilization','Once domesticated, now feral','Formerly worshipped as a god','Mistaken for a god','Considered an omen','Used for transportation','Harvested for magical materials','Forms bonds with certain humanoids','Guards something ancient','Appears during disasters','Population suddenly increasing','Population mysteriously declining','Recently discovered','Historical records contradict each other','Roll twice — both are true'
+  ], bonusOn:20 },
+  { title:'Valuable Body Part', options:[
+    'Blood','Bone','Hide/scales','Horns/antlers','Teeth','Eyes','Internal magical organ','Venom','Eggs','Secretions','Entire corpse','Nothing useful, or harvesting is disastrous','Feathers/fur','Claws','Heart','Brain/nervous tissue','Reproductive organs','Living symbiotic organism','Magical residue left behind','Roll twice — both are valuable'
+  ], bonusOn:20 },
+  { title:'Great Mystery', options:[
+    'Where did it originate?','Why is its population increasing?','Why is it disappearing?','What does it actually eat?','How does it reproduce?','Where does it migrate?','Why does it spare certain people?','What is it guarding?','Is it actually intelligent?','Why do ancient depictions look different?','What happens when it reaches extreme age?','Everything scholars know may be wrong','Why does it appear before disasters?','What happens to its soul after death?','Why do other monsters fear it?','Why is it connected to an ancient civilization?','What is the purpose of its unusual anatomy?','Why does it perform a seemingly meaningless ritual?','What would happen if the last one died?','Roll twice — interconnected mysteries'
+  ], bonusOn:20 },
+  { title:'Final Weirdness', options:[
+    'Its skeleton is alive independently of its flesh','Its shadow behaves independently','It has no mouth but still feeds','Its offspring are a completely different species','Killing one creates two problems','It remembers everyone its ancestors encountered','Its body contains a miniature ecosystem','It physically changes according to nearby emotions','It cannot perceive living creatures directly','Parts removed from it remain alive','It builds structures nobody understands','It imitates another species perfectly','Its dreams physically affect its surroundings','It becomes more intelligent when injured','Its corpse is more dangerous than the living creature','Two apparently different monsters are lifecycle stages','It experiences time differently from everyone else','It instinctively performs an unexplained ancient ritual','Its supposed weakness is deliberately propagated misinformation','Roll twice and combine both twists'
+  ], bonusOn:20 }
+];
+
+const SECTION_GROUPS = [
+  {title:'Origins & Anatomy', detail:'Form, proportions, and how the creature moves.', start:0,end:6},
+  {title:'Ecology & Behavior', detail:'Habitat, feeding, ecological niche, and mind.', start:6,end:12},
+  {title:'Supernatural Biology', detail:'How its power works, what limits it, and how it lives.', start:12,end:18},
+  {title:'History & Lore', detail:'Civilization, valuable materials, mysteries, and a final twist.', start:18,end:23}
+];
+const STORAGE_KEY = 'field-compendium-creature-v1';
+const LIBRARY_KEY = 'field-compendium-library-v1';
+let library = [];
+const MAX_BONUS_DEPTH = 6;
+const emptyState = () => ({name:'', specimen:'001', notes:'', rolls:Array(23).fill(''), bonus:{}, libraryId:''});
+let state = emptyState();
+const $ = id => document.getElementById(id);
+const esc = str => String(str ?? '').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const validRoll = v => /^(?:[1-9]|1[0-9]|20)$/.test(String(v).trim());
+const safeRoll = v => validRoll(v) ? String(Number(v)) : '';
+const nameOrPlaceholder = () => state.name.trim() || 'Unnamed Creature';
+const optionText = (index, value) => value ? DATA[index].options[Number(value)-1] : '';
+const wantsBonus = (i, value) => Boolean(value && DATA[i].bonusOn === Number(value));
+const getNode = (index, path) => path === '' ? state.rolls[index] : (state.bonus[`${index}:${path}`] || '');
+const setNode = (index, path, value) => { if (path === '') state.rolls[index] = safeRoll(value); else state.bonus[`${index}:${path}`] = safeRoll(value); };
+function rollD20() {
+  if (window.crypto && crypto.getRandomValues) {
+    const limit = Math.floor(4294967296 / 20) * 20;
+    const arr = new Uint32Array(1);
+    do { crypto.getRandomValues(arr); } while (arr[0] >= limit);
+    return 1 + arr[0] % 20;
+  }
+  return 1 + Math.floor(Math.random() * 20);
+}
+function getResolved(index, path='', depth=0) {
+  const value = getNode(index,path);
+  if (!value) return {text:'',complete:false,pending:1};
+  if (!wantsBonus(index,value)) return {text:optionText(index,value),complete:true,pending:0};
+  if (depth >= MAX_BONUS_DEPTH) return {text:'Further chained bonus rolls require manual interpretation',complete:false,pending:1};
+  const a = getResolved(index,path+'A',depth+1), b = getResolved(index,path+'B',depth+1);
+  const text = [a.text || 'A pending', b.text || 'B pending'].join(' + ');
+  return {text,complete:a.complete && b.complete,pending:a.pending+b.pending};
+}
+function presentResult(index) {
+  const value = state.rolls[index];
+  if (!value) return {text:'Awaiting d20 roll',className:''};
+  const r = getResolved(index);
+  if (r.complete) return {text:r.text,className:'filled'};
+  return {text:`${optionText(index,value)} → ${r.text}`,className:'pending'};
+}
+function bonusMarkup(index, path='', depth=0) {
+  const value = getNode(index,path);
+  if (!wantsBonus(index,value)) return '';
+  if (depth>=MAX_BONUS_DEPTH) return '<p class="bonus-title">More nested bonuses occurred; record the additional result in your field notes.</p>';
+  const fields = ['A','B'].map(letter=>{
+    const child=path+letter, v=getNode(index,child), label=`${index+1}${child}`;
+    return `<div class="bonus-field"><label for="bonus-${index}-${child}">Bonus ${esc(label)} · d20</label>
+      <input id="bonus-${index}-${child}" class="bonus-input" data-bonus-index="${index}" data-bonus-path="${child}" type="number" inputmode="numeric" min="1" max="20" placeholder="1–20" value="${esc(v)}" />
+      <span class="bonus-result">${esc(v?optionText(index,v):'Not rolled')}</span><div class="bonus-nested">${bonusMarkup(index,child,depth+1)}</div></div>`;
+  });
+  return `<div class="bonus-wrap"><div class="bonus-title">Roll twice: both results are part of this category.</div><div class="bonus-pair">${fields.join('')}</div></div>`;
+}
+function buildInputUI() {
+  const root=$('category-list');
+  root.innerHTML=SECTION_GROUPS.map(group=>{
+    const entries = DATA.slice(group.start,group.end).map((d,j)=>{
+      const i=group.start+j;
+      const options=d.options.map((o,k)=>`<button type="button" class="option" data-set-index="${i}" data-set-value="${k+1}"><span class="option-number">${String(k+1).padStart(2,'0')}</span><span>${esc(o)}</span></button>`).join('');
+      return `<div class="roll-card" id="category-${i}" data-category="${i}"><div class="roll-row">
+        <span class="roll-index">${String(i+1).padStart(2,'0')}</span>
+        <div><label class="roll-name" for="roll-${i}">${esc(d.title)}</label><span class="roll-result" id="result-${i}">Awaiting d20 roll</span></div>
+        <div class="roll-box"><input class="roll-number" type="number" min="1" max="20" inputmode="numeric" id="roll-${i}" data-roll-index="${i}" aria-label="d20 result for ${esc(d.title)}" placeholder="1–20" />
+        <button type="button" class="die-button" data-random-index="${i}" title="Roll one d20 for ${esc(d.title)}" aria-label="Roll a d20 for ${esc(d.title)}">d20</button></div>
+        </div><div class="bonus-slot" id="bonuses-${i}"></div>
+        <details class="outcomes"><summary>View all 20 results</summary><div class="outcome-grid">${options}</div></details>
+      </div>`;
+    }).join('');
+    return `<section aria-label="${esc(group.title)}"><div class="section-heading"><h3>${esc(group.title)}</h3></div><p class="section-detail">${esc(group.detail)}</p>${entries}</section>`;
+  }).join('');
+}
+function showMessage(msg, isError=false) {
+  const el=$('generator-message'); el.textContent=msg; el.style.color=isError?'#923f34':'#426d53';
+}
+function store() { try { localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); } catch(e) { /* still functions without storage */ } }
+function load() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (!saved || typeof saved!=='object') return;
+    state={
+      name:typeof saved.name==='string'?saved.name.slice(0,90):'',
+      specimen:typeof saved.specimen==='string'?saved.specimen.slice(0,12):'001',
+      notes:typeof saved.notes==='string'?saved.notes:'',
+      libraryId:typeof saved.libraryId==='string'?saved.libraryId:'',
+      rolls:Array.from({length:23},(_,i)=>safeRoll(Array.isArray(saved.rolls)?saved.rolls[i]:'')),
+      bonus:{}
+    };
+    if (saved.bonus && typeof saved.bonus==='object') for (const [k,v] of Object.entries(saved.bonus)) if (/^\d{1,2}:[AB]{1,6}$/.test(k)) state.bonus[k]=safeRoll(v);
+  } catch(e) { state=emptyState(); }
+}
+function updateAll(syncInputs=true) {
+  for (let i=0;i<DATA.length;i++) {
+    if (syncInputs) $('roll-'+i).value=state.rolls[i];
+    const r=presentResult(i), el=$('result-'+i);
+    el.textContent=r.text; el.className='roll-result '+r.className;
+    $('bonuses-'+i).innerHTML=bonusMarkup(i);
+    const details=$('category-'+i).querySelectorAll('.option');
+    details.forEach(b=>b.classList.toggle('active',String(b.dataset.setValue)===state.rolls[i]));
+  }
+  const entered=state.rolls.filter(Boolean).length;
+  const resolved=DATA.map((_,i)=>getResolved(i));
+  const bonusPending=resolved.reduce((n,r,i)=>n+(state.rolls[i]?r.pending:0),0);
+  const complete=entered===23 && resolved.every(r=>r.complete);
+  $('progress-label').textContent=`${entered} of 23`;
+  $('progress-fill').style.width=`${(entered/23)*100}%`;
+  $('bonus-label').textContent=bonusPending ? `· ${bonusPending} bonus roll${bonusPending===1?'':'s'} pending` : '';
+  const pill=$('completion-pill');pill.textContent=complete?'Complete':entered===0?'Unstarted':bonusPending?'Bonus rolls needed':'In progress';pill.classList.toggle('complete',complete);
+  renderBestiary(complete,entered,bonusPending);
+  $('download-button').disabled=entered===0 && !state.name.trim() && !state.notes.trim();
+  $('copy-button').disabled=entered===0 && !state.name.trim() && !state.notes.trim();
+  store();
+}
+const getField = index => {
+  const r=getResolved(index);
+  return r.complete?r.text:'';
+};
+function sectionNarratives() {
+  const f=DATA.map((_,i)=>getField(i));
+  const segments=[];
+  function make(id,title,lines) {const cleaned=lines.filter(Boolean);segments.push({id,title,text:cleaned.join(' ')});}
+  const x = text => text ? text[0].toLowerCase()+text.slice(1) : '';
+  make('appearance','Appearance & Anatomy',[
+    (f[2]||f[1]||f[3]) ? `Its recorded size is ${x(f[2]||'undetermined')}; its body plan is ${x(f[1]||'not yet recorded')}, with ${x(f[3]||'an unspecified exterior')}.` : '',
+    f[4]?`Its defining anatomy features ${x(f[4])}.`:'',
+    f[5]?`Its characteristic movement is ${x(f[5])}.`:''
+  ]);
+  make('ecology','Ecology & Behavior',[
+    (f[6]||f[7]||f[8])?`It inhabits ${x(f[6]||'an unspecified environment')}, drawing sustenance from ${x(f[7]||'an unknown source')}; its ecological role is ${x(f[8]||'not yet established')}.`:'',
+    f[9]?`Its social structure is ${x(f[9])}.`:'',
+    (f[10]||f[11])?`Its intelligence is characterized as ${x(f[10]||'undetermined')}, while its disposition toward humanoids is ${x(f[11]||'not yet established')}.`:''
+  ]);
+  make('abilities','Supernatural Biology',[
+    (f[12]||f[13]||f[14])?`Its power originates in ${x(f[12]||'an unknown source')}; its primary ability is ${x(f[13]||'not yet recorded')}, expressed through ${x(f[14]||'an undetermined mechanism')}.`:'',
+    f[15]?`A known limitation or weakness is ${x(f[15])}.`:''
+  ]);
+  make('lifecycle','Lifecycle',[
+    f[16]?`Its mode of reproduction is ${x(f[16])}.`:'',
+    f[17]?`Its lifespan is described as: ${x(f[17])}.`:''
+  ]);
+  make('lore','History & Lore',[
+    f[0]?`Its origin is recorded as ${x(f[0])}.`:'',
+    f[18]?`Civilizations generally regard it as ${x(f[18])}.`:'',
+    f[19]?`Its historical relationship with humanoids: ${x(f[19])}.`:'',
+    f[20]?`Its prized resource or harvesting outcome is ${x(f[20])}.`:'',
+    f[21]?`An outstanding mystery remains: ${f[21]}`:'',
+    f[22]?`A defining anomaly: ${f[22]}.`:''
+  ]);
+  if (state.notes.trim()) make('notes',"Naturalist's Notes",[state.notes.trim()]);
+  return segments;
+}
+function renderBestiary(complete,entered,bonusPending) {
+  const number=state.specimen.trim() || '—';
+  const title=esc(nameOrPlaceholder());
+  const chips=[getField(2),getField(0),getField(8),getField(6)].filter(Boolean).map(x=>`<span class="fact-chip">${esc(x)}</span>`).join('');
+  const sections=sectionNarratives().map(s=>`<section class="entry-section"><h4>${esc(s.title)}</h4>${s.text?`<p>${esc(s.text).replace(/\n/g,'<br>')}</p>`:`<p class="empty">Enter the related rolls to reveal this section.</p>`}</section>`).join('');
+  $('bestiary-preview').innerHTML=`<div class="book-stamp">Field Guide · Specimen ${esc(number)}</div><div class="book-divider"></div><h3 class="entry-title">${title}</h3><div class="entry-subtitle">${complete?'Complete bestiary record':entered?'Provisional bestiary record':'Awaiting observation'}</div>
+  <div class="facts">${chips||'<span class="fact-chip">Undetermined species</span>'}</div>${sections}
+  <div class="book-divider" style="margin-top:22px"></div><p class="record-caption">${entered}/23 primary rolls · ${bonusPending?bonusPending+' unresolved bonus rolls':'All required bonus results resolved'}<br>Interpretation based on the recorded tables; elaborate lore manually as desired.</p>`;
+}
+function exportText() {
+  const result=DATA.map((d,i)=>getResolved(i));
+  const complete=state.rolls.every(Boolean)&&result.every(r=>r.complete);
+  const line='='.repeat(66);
+  const out=[line,`THE FIELD COMPENDIUM · CREATURE #${state.specimen.trim()||'—'}`,nameOrPlaceholder().toUpperCase(),line,
+    `Status: ${complete?'COMPLETE':'DRAFT — unfinished rolls or bonus results'}`,
+    `Primary rolls: ${state.rolls.filter(Boolean).length}/23`,`Roll code: ${state.rolls.map(x=>x||'—').join(', ')}`,''];
+  out.push('BESTIARY ENTRY','-'.repeat(66));
+  for (const section of sectionNarratives()) {
+    out.push('',section.title.toUpperCase(),section.text||'(Awaiting related dice rolls)');
+  }
+  out.push('','D20 ROLL RECORD','-'.repeat(66));
+  DATA.forEach((d,i)=>{
+    out.push(`${String(i+1).padStart(2,'0')}. ${d.title} — ${state.rolls[i]||'NOT ROLLED'}`);
+    out.push(`    ${state.rolls[i] ? (result[i].complete?result[i].text : `${optionText(i,state.rolls[i])} [BONUS PENDING]`) : 'Not yet determined'}`);
+    function addBonus(path,depth) {
+      if(depth>=MAX_BONUS_DEPTH || !wantsBonus(i,getNode(i,path)))return;
+      ['A','B'].forEach(c=>{
+        const p=path+c, v=getNode(i,p);
+        out.push(`    Bonus ${i+1}${p}: ${v||'NOT ROLLED'}${v?' — '+optionText(i,v):''}`);
+        if(v)addBonus(p,depth+1);
+      });
+    }
+    addBonus('',0);
+  });
+  out.push('',line,'Created with the Mythical Creature Generator · Single-file static edition.');
+  return out.join('\n').replace(/\n{3,}/g,'\n\n')+'\n';
+}
+function downloadTxt() {
+  const content=exportText();
+  const blob=new Blob([content],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  const slug=(state.name.trim()||'unnamed-creature').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60)||'creature';
+  link.href=url;link.download=`creature-${state.specimen.trim().replace(/[^\w-]/g,'')||'001'}-${slug}.txt`;
+  document.body.appendChild(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  showMessage('TXT bestiary record downloaded.');
+}
+async function copyEntry() {
+  const content=exportText();
+  try {
+    if(navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(content);
+    else {
+      const el=document.createElement('textarea');el.value=content;el.style.position='fixed';el.style.opacity='0';document.body.appendChild(el);el.select();
+      if(!document.execCommand('copy')) throw new Error('Copy failed');el.remove();
+    }
+    showMessage('Bestiary entry copied to clipboard.');
+  } catch(err) { showMessage('Copy unavailable in this browser. Use Export .txt instead.',true); }
+}
+function loadLibrary() {
+  try {
+    const saved=JSON.parse(localStorage.getItem(LIBRARY_KEY));
+    if(Array.isArray(saved)) library=saved.filter(x=>x && typeof x.id==='string' && x.state && Array.isArray(x.state.rolls)).slice(0,250);
+  } catch(e) { library=[]; }
+}
+function storeLibrary() {
+  try { localStorage.setItem(LIBRARY_KEY,JSON.stringify(library)); } catch(e) { showMessage('Browser storage is full or disabled. Export TXT files to retain your entries.',true); }
+}
+function renderLibrary() {
+  $('library-count').textContent=`(${library.length})`;
+  $('export-bestiary').disabled=library.length===0;
+  $('library-list').innerHTML=library.length?library.slice().reverse().map(entry=>{
+    const snap=entry.state, n=Array.isArray(snap.rolls)?snap.rolls.filter(Boolean).length:0;
+    return `<div class="saved-card"><div><p class="saved-card-name">${esc(snap.name?.trim()||'Unnamed Creature')}</p><div class="saved-card-meta">Specimen ${esc(snap.specimen||'—')} · ${n}/23 rolls · ${esc(entry.savedAt||'Saved')}</div></div>
+      <div class="saved-card-controls"><button type="button" data-library-load="${esc(entry.id)}">Open</button><button class="remove" type="button" data-library-remove="${esc(entry.id)}" aria-label="Delete ${esc(snap.name||'saved creature')}">Delete</button></div></div>`;
+  }).join(''):'<p class="library-empty">No saved species yet. Enter your rolls, then select “Save current creature.”</p>';
+}
+function saveCreature() {
+  if(!state.rolls.some(Boolean) && !state.name.trim() && !state.notes.trim()) {showMessage('Enter at least one roll or a creature name before saving.',true);return;}
+  const id=state.libraryId || `${Date.now()}-${Math.floor(Math.random()*100000)}`;
+  state.libraryId=id;
+  const item={id,savedAt:new Date().toLocaleDateString(),state:JSON.parse(JSON.stringify(state))};
+  const index=library.findIndex(x=>x.id===id);
+  if(index>=0)library[index]=item;else library.push(item);
+  if(library.length>250)library=library.slice(-250);
+  store();storeLibrary();renderLibrary();showMessage('Creature saved to this browser’s bestiary.');
+}
+function loadCreature(id) {
+  const item=library.find(x=>x.id===id);
+  if(!item)return;
+  if(state.rolls.some(Boolean) && !window.confirm('Open this creature? Unsaved changes in the current draft will be replaced.'))return;
+  const snap=item.state;
+  state={name:String(snap.name||'').slice(0,90),specimen:String(snap.specimen||'001').slice(0,12),notes:String(snap.notes||''),
+    rolls:Array.from({length:23},(_,i)=>safeRoll(snap.rolls[i])),bonus:{},libraryId:id};
+  for(const [k,v] of Object.entries(snap.bonus||{}))if(/^\d{1,2}:[AB]{1,6}$/.test(k))state.bonus[k]=safeRoll(v);
+  $('creature-name').value=state.name;$('specimen-number').value=state.specimen;$('creature-notes').value=state.notes;$('bulk-rolls').value='';
+  updateAll();showMessage('Saved creature opened.');window.scrollTo({top:0,behavior:'smooth'});
+}
+function deleteCreature(id) {
+  const item=library.find(x=>x.id===id);if(!item)return;
+  if(!window.confirm(`Delete “${item.state.name?.trim()||'Unnamed Creature'}” from this browser’s saved bestiary?`))return;
+  library=library.filter(x=>x.id!==id);if(state.libraryId===id){state.libraryId='';store();}
+  storeLibrary();renderLibrary();showMessage('Saved creature deleted.');
+}
+function downloadAll() {
+  if(!library.length)return;
+  const current=state;
+  const entries=library.map(item=>{state=item.state;return exportText();});
+  state=current;
+  const blob=new Blob([entries.join('\n'+'#'.repeat(76)+'\n\n')],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download='mythical-creature-bestiary.txt';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);showMessage('Saved bestiary exported as one TXT file.');
+}
+function attachEvents() {
+  $('category-list').addEventListener('input', e=>{
+    if(e.target.matches('[data-roll-index]')) {
+      const i=Number(e.target.dataset.rollIndex),v=e.target.value;
+      if(v!==''&&!validRoll(v)){showMessage('Each die must be a whole number between 1 and 20.',true);return;}
+      setNode(i,'',v);showMessage('');updateAll(false);
+    } else if(e.target.matches('[data-bonus-index]')) {
+      const i=Number(e.target.dataset.bonusIndex),path=e.target.dataset.bonusPath,v=e.target.value;
+      if(v!==''&&!validRoll(v)){showMessage('Bonus dice also use 1–20.',true);return;}
+      setNode(i,path,v);showMessage('');
+      // Rebuilding the bonus subtree on every keypress would discard focus; do so only when the value is committed.
+      const r=getResolved(i), label=$('result-'+i); label.textContent=presentResult(i).text;label.className='roll-result '+presentResult(i).className;
+      const entered=state.rolls.filter(Boolean).length;
+      const resolved=DATA.map((_,j)=>getResolved(j));
+      const bonusPending=resolved.reduce((n,res,j)=>n+(state.rolls[j]?res.pending:0),0);
+      const complete=entered===23 && resolved.every(res=>res.complete);
+      $('bonus-label').textContent=bonusPending?`· ${bonusPending} bonus roll${bonusPending===1?'':'s'} pending`:'';
+      $('completion-pill').textContent=complete?'Complete':bonusPending?'Bonus rolls needed':'In progress';$('completion-pill').classList.toggle('complete',complete);
+      renderBestiary(complete,entered,bonusPending); store();
+    }
+  });
+  $('category-list').addEventListener('change',e=>{
+    if(e.target.matches('[data-bonus-index]')) updateAll();
+    if(e.target.matches('[data-roll-index]')) updateAll();
+  });
+  $('category-list').addEventListener('click',e=>{
+    const pick=e.target.closest('[data-set-index]');
+    if(pick){setNode(Number(pick.dataset.setIndex),'',pick.dataset.setValue);updateAll();return;}
+    const random=e.target.closest('[data-random-index]');
+    if(random){setNode(Number(random.dataset.randomIndex),'',rollD20());updateAll();}
+  });
+  $('apply-rolls').addEventListener('click',()=>{
+    const raw=$('bulk-rolls').value.trim();
+    const values=raw.split(/[\s,;]+/).filter(Boolean);
+    if(values.length!==23 || values.some(x=>!validRoll(x))){showMessage('Enter exactly 23 dice results, each a whole number between 1 and 20.',true);return;}
+    state.rolls=values.map(safeRoll);state.bonus={};
+    updateAll();showMessage('All 23 primary rolls applied. Enter any required bonus rolls below.');
+  });
+  $('fill-empty').addEventListener('click',()=>{
+    let n=0;
+    state.rolls=state.rolls.map(r=>{if(r)return r;n++;return String(rollD20());});
+    updateAll();showMessage(n?`${n} empty primary roll${n===1?'':'s'} filled.`:'All primary dice are already recorded.');
+  });
+  $('reset-button').addEventListener('click',()=>{
+    if(!window.confirm('Clear all rolls, bonus rolls, name, and notes to start a new creature?'))return;
+    state=emptyState();$('creature-name').value='';$('specimen-number').value='001';$('creature-notes').value='';$('bulk-rolls').value='';
+    updateAll();showMessage('New blank creature started.');
+  });
+  $('creature-name').addEventListener('input',e=>{state.name=e.target.value;updateAll(false);});
+  $('specimen-number').addEventListener('input',e=>{state.specimen=e.target.value;updateAll(false);});
+  $('creature-notes').addEventListener('input',e=>{state.notes=e.target.value;updateAll(false);});
+  $('download-button').addEventListener('click',downloadTxt);
+  $('copy-button').addEventListener('click',copyEntry);
+  $('print-button').addEventListener('click',()=>window.print());
+  $('save-to-bestiary').addEventListener('click',saveCreature);
+  $('export-bestiary').addEventListener('click',downloadAll);
+  $('library-list').addEventListener('click',e=>{
+    const load=e.target.closest('[data-library-load]');if(load){loadCreature(load.dataset.libraryLoad);return;}
+    const remove=e.target.closest('[data-library-remove]');if(remove)deleteCreature(remove.dataset.libraryRemove);
+  });
+}
+function init() {
+  load();loadLibrary();buildInputUI();attachEvents();renderLibrary();
+  $('creature-name').value=state.name;$('specimen-number').value=state.specimen;$('creature-notes').value=state.notes;
+  updateAll();
+}
+init();
+</script>
+</body>
+</html>
